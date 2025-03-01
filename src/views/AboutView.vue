@@ -17,7 +17,7 @@
           <p>De la rețete transmise din generație în generație până la produse artizanale create cu pasiune, fiecare produs din magazinul nostru spune o poveste despre moștenirea noastră culturală.</p>
         </div>
         <div class="image-container">
-          <img src="https://images.unsplash.com/photo-1595475207225-428b62bda831" alt="Produse tradiționale românești" />
+          <img src="https://images.unsplash.com/photo-1595475207225-428b62bda831" alt="Produse tradiționale românești" class="section-image" />
         </div>
       </div>
     </section>
@@ -47,7 +47,7 @@
           </div>
         </div>
         <div class="image-container">
-          <img src="https://images.unsplash.com/photo-1605522561233-768ad7a8fabf" alt="Preparare produse tradiționale" />
+          <img src="https://images.unsplash.com/photo-1605522561233-768ad7a8fabf" alt="Preparare produse tradiționale" class="section-image" />
         </div>
       </div>
     </section>
@@ -148,35 +148,50 @@ export default {
 }
 
 .hero-section {
-  height: 60vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1601647998485-8df45a0a8c6a') center/cover no-repeat;
+  position: relative;
+  height: 400px;
+  background-image: url('https://images.unsplash.com/photo-1607623814075-e51df1bdc82f');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  color: white;
+  padding: 2rem;
   margin-top: 54px;
 }
 
+/* Overlay pentru a face textul mai lizibil */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
 .hero-content {
+  position: relative; /* Pentru a apărea deasupra overlay-ului */
+  text-align: center;
+  color: white;
   max-width: 800px;
-  padding: 0 20px;
+  padding: 2rem;
+  /* background: rgba(37, 119, 200, 0.8);  */
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .hero-content h1 {
-  font-size: 3.5rem;
+  font-size: 3rem;
   margin-bottom: 1rem;
-  font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 1px;
 }
 
 .hero-content p {
-  font-size: 1.5rem;
-  font-weight: 300;
+  font-size: 1.2rem;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  margin: 0 auto;
 }
 
 .content-section {
@@ -222,7 +237,7 @@ h2 {
 p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #666;
+  /* color: #666; */
   margin-bottom: 1rem;
 }
 
@@ -268,6 +283,7 @@ p {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: #2577c8;
 }
 
 .value-card:hover {
@@ -284,6 +300,12 @@ p {
   font-size: 1.2rem;
   color: #333;
   margin-bottom: 0.5rem;
+}
+
+.value-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
 }
 
 .contact-section {
@@ -407,12 +429,16 @@ p {
 }
 
 @media (max-width: 768px) {
+  .hero-section {
+    height: 300px;
+  }
+
   .hero-content h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .hero-content p {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .section-content {
@@ -477,6 +503,65 @@ p {
 
   .hero-content {
     max-width: 1000px;
+  }
+}
+
+.section-title {
+  color: #2577c8;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.story-section,
+.mission-section,
+.values-section {
+  background: #f8f9fa;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Stilizare pentru imagini */
+.section-image {
+  width: 100%;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  object-fit: cover;
+}
+
+.section-image:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ajustare spațiere între elemente în secțiuni */
+.story-content,
+.mission-content,
+.values-content {
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* Ajustări pentru mobile */
+@media (max-width: 768px) {
+  .section-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+  }
+
+  .story-section,
+  .mission-section,
+  .values-section {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
   }
 }
 </style>
