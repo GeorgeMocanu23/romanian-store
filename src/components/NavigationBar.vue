@@ -191,14 +191,21 @@ window.addEventListener('storage', () => {
 }
 
 .login-btn {
-  background: #2577c8;
-  color: white;
+  background: transparent;
+  color: #2577c8;
   text-decoration: none;
+  border: none;
 }
 
 .login-btn:hover {
-  background: #1b5a9d;
+  background: rgba(37, 119, 200, 0.1);
+  color: #1b5a9d;
   transform: translateY(-2px);
+}
+
+.login-btn.router-link-active {
+  background: #2577c8;
+  color: white;
 }
 
 .logout-btn {
@@ -240,24 +247,35 @@ window.addEventListener('storage', () => {
 
 @media (max-width: 768px) {
   .navbar {
-    padding: 0.75rem 1rem;
-    flex-direction: column;
-    gap: 1rem;
+    padding: 0.5rem 1rem;
+    flex-direction: row;
+    gap: 0.5rem;
   }
 
   .nav-content {
-    width: 100%;
-    flex-direction: column;
-    gap: 1rem;
+    width: auto;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .logo-container {
+    gap: 0.5rem;
+  }
+
+  .brand-name {
+    display: none;
+  }
+
+  .logo {
+    height: 25px;
   }
 
   .nav-links {
-    width: 100%;
-    justify-content: center;
+    gap: 0.25rem;
   }
 
   .nav-link {
-    padding: 0.5rem;
+    padding: 0.4rem;
   }
 
   .nav-link span {
@@ -265,16 +283,23 @@ window.addEventListener('storage', () => {
   }
 
   .auth-section {
-    width: 100%;
-    justify-content: center;
+    gap: 0.25rem;
   }
 
-  .brand-name {
-    font-size: 1.2rem;
+  .auth-btn {
+    padding: 0.4rem;
   }
 
-  .logo {
-    height: 30px;
+  .auth-btn span {
+    display: none;
+  }
+
+  .cart-btn {
+    padding: 0.4rem;
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
   }
 }
 
