@@ -25,15 +25,18 @@
         </div>
 
         <div class="auth-section">
-          <RouterLink v-if="!isLoggedIn" to="/login" class="auth-btn login-btn">
+          <RouterLink v-if="!authStore.isLoggedIn" to="/login" class="auth-btn login-btn">
             <i class="nav-icon">👤</i>
             <span>Autentificare</span>
           </RouterLink>
           
-          <button v-else @click="handleLogout" class="auth-btn logout-btn">
-            <i class="nav-icon">🚪</i>
-            <span>Deconectare</span>
-          </button>
+          <div v-else class="user-section">
+            <span class="welcome-text">Bun venit, {{ authStore.userFirstName }}</span>
+            <button @click="handleLogout" class="auth-btn logout-btn">
+              <i class="nav-icon">🚪</i>
+              <span>Deconectare</span>
+            </button>
+          </div>
 
           <div class="cart-btn">
             <i class="nav-icon">🛒</i>
@@ -47,34 +50,21 @@
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import logo from '@/assets/romanian-flag.svg'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const isLoggedIn = ref(false)
+const authStore = useAuthStore()
 
 onMounted(() => {
-  // Check login status
-  checkLoginStatus()
+  authStore.checkLoginStatus()
 })
-
-const checkLoginStatus = () => {
-  const token = localStorage.getItem('token')
-  isLoggedIn.value = !!token
-}
 
 const handleLogout = () => {
-  // Remove token from localStorage
-  localStorage.removeItem('token')
-  isLoggedIn.value = false
-  // Redirect to login page
+  authStore.logout()
   router.push('/login')
 }
-
-// Add a listener to update the state when localStorage changes
-window.addEventListener('storage', () => {
-  checkLoginStatus()
-})
 </script>
 
 <style scoped>
@@ -245,6 +235,18 @@ window.addEventListener('storage', () => {
   justify-content: center;
 }
 
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.welcome-text {
+  color: #2577c8;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0.5rem 1rem;
@@ -300,6 +302,10 @@ window.addEventListener('storage', () => {
 
   .nav-icon {
     font-size: 1.1rem;
+  }
+
+  .welcome-text {
+    display: none;
   }
 }
 

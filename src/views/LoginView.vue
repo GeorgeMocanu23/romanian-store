@@ -54,6 +54,8 @@
           <a href="#" class="forgot-password">Ai uitat parola?</a>
         </div>
 
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+
         <button type="submit" class="submit-btn" :disabled="isLoading">
           <span v-if="!isLoading">Autentificare</span>
           <span v-else class="loading-spinner">⌛</span>
@@ -71,40 +73,52 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 const login = async () => {
   try {
     isLoading.value = true
+    errorMessage.value = ''
+    
+    if (!email.value || !password.value) {
+      errorMessage.value = 'Te rugăm să completezi toate câmpurile'
+      return
+    }
+
     const response = await axios.post('http://localhost:3000/login', {
       email: email.value,
       password: password.value
     })
     
     localStorage.setItem('token', response.data.token)
+    localStorage.setItem('user', JSON.stringify(response.data.user))
     if (rememberMe.value) {
       localStorage.setItem('rememberMe', 'true')
     }
     
+    authStore.setLoginStatus(response.data.user)
     router.push('/products')
   } catch (error) {
     console.error('Eroare la autentificare:', error)
     if (error.response) {
-      alert(error.response.data.message || 'Eroare la autentificare')
+      errorMessage.value = error.response.data.message || 'Eroare la autentificare'
     } else if (error.request) {
-      alert('Nu s-a putut contacta serverul. Verificați conexiunea.')
+      errorMessage.value = 'Nu s-a putut contacta serverul. Verificați conexiunea.'
     } else {
-      alert('A apărut o eroare neașteptată')
+      errorMessage.value = 'A apărut o eroare neașteptată'
     }
   } finally {
     isLoading.value = false
@@ -333,5 +347,13 @@ const login = async () => {
     gap: 1rem;
     align-items: flex-start;
   }
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: left;
 }
 </style>
