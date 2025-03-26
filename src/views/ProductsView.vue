@@ -52,24 +52,28 @@
 
           <div class="product-actions">
             <div class="quantity-controls">
-              <button @click="decreaseQuantity(product)" 
-                      :disabled="product.quantity <= 0"
-                      class="quantity-btn">
-                −
+              <button 
+                class="quantity-btn" 
+                @click="decreaseQuantity(product)"
+                :disabled="product.quantity <= 0"
+              >
+                <i class="nav-icon">➖</i>
               </button>
-              <span class="quantity-display">{{ product.quantity || 0 }}</span>
-              <button @click="increaseQuantity(product)" 
-                      :disabled="product.quantity >= product.stock"
-                      class="quantity-btn">
-                +
+              <span class="quantity-display">{{ product.quantity }}</span>
+              <button 
+                class="quantity-btn" 
+                @click="increaseQuantity(product)"
+                :disabled="product.quantity >= product.stock"
+              >
+                <i class="nav-icon">➕</i>
               </button>
             </div>
             <button 
-              class="add-to-cart-btn" 
+              class="add-to-cart-btn"
               @click="addToCart(product)"
-              :disabled="!product.quantity"
+              :disabled="product.quantity === 0"
             >
-              <i class="cart-icon">🛒</i>
+              <i class="nav-icon">🛒</i>
               Adaugă în coș
             </button>
           </div>
@@ -79,161 +83,178 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script>
+import { useCartStore } from '@/stores/cart'
 
-const products = ref([
-  {
-    id: 1,
-    name: 'Sarmale Tradiționale',
-    description: 'Sarmale delicioase făcute după rețeta bunicii, cu carne de porc și vită, învelite în foi de varză murată și servite cu mămăligă caldă.',
-    price: 35.99,
-    stock: 20,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7',
-    quantity: 0
+export default {
+  name: 'ProductsView',
+
+  data() {
+    return {
+      products: [
+        {
+          id: 1,
+          name: 'Sarmale Tradiționale',
+          description: 'Sarmale delicioase făcute după rețeta bunicii, cu carne de porc și vită, învelite în foi de varză murată și servite cu mămăligă caldă.',
+          price: 35.99,
+          stock: 20,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7',
+          quantity: 0
+        },
+        {
+          id: 2,
+          name: 'Cozonac cu Nucă',
+          description: 'Cozonac proaspăt cu umplutură bogată de nucă, stafide și esență de rom. Perfect pentru momentele speciale alături de cei dragi.',
+          price: 45.99,
+          stock: 15,
+          category: 'Patiserie',
+          image: 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df',
+          quantity: 0
+        },
+        {
+          id: 3,
+          name: 'Zacuscă de Vinete',
+          description: 'Zacuscă autentică făcută din vinete coapte pe foc, ardei copți, ceapă și ulei de măsline. Perfect pentru un mic dejun tradițional.',
+          price: 19.99,
+          stock: 30,
+          category: 'Conserve',
+          image: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7',
+          quantity: 0
+        },
+        {
+          id: 4,
+          name: 'Plăcintă cu Brânză',
+          description: 'Plăcintă tradițională cu brânză de oaie, mărar și ceapă verde, coaptă în cuptor pe vatră. Gust autentic românesc.',
+          price: 28.99,
+          stock: 12,
+          category: 'Patiserie',
+          image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca',
+          quantity: 0
+        },
+        {
+          id: 5,
+          name: 'Tochitură Moldovenească',
+          description: 'Tochitură cu carne de porc, cârnați afumați și mămăligă, servită cu ou ochi și brânză de oaie. O explozie de savoare.',
+          price: 42.99,
+          stock: 8,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba',
+          quantity: 0
+        },
+        {
+          id: 6,
+          name: 'Tochitură cu Mămăligă',
+          description: 'Tochitură tradițională cu carne de porc, cârnați afumați și brânză de oaie, servită cu mămăligă caldă și ou ochi. O specialitate moldovenească autentică.',
+          price: 32.99,
+          stock: 25,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1544025162-d76694265947',
+          quantity: 0
+        },
+        {
+          id: 7,
+          name: 'Drob de Miel',
+          description: 'Drob tradițional de miel cu verdeață proaspătă, ouă și condimente aromate. Perfect pentru masa de sărbătoare.',
+          price: 25.99,
+          stock: 35,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db',
+          quantity: 0
+        },
+        {
+          id: 8,
+          name: 'Ciorbă de Burtă',
+          description: 'Ciorbă de burtă cremă, cu smântână, usturoi și ardei iute. Servită cu ardei iute proaspăt.',
+          price: 27.99,
+          stock: 18,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd',
+          quantity: 0
+        },
+        {
+          id: 9,
+          name: 'Dulceață de Trandafiri',
+          description: 'Dulceață artizanală din petale de trandafir culese manual. Perfect pentru deserturi și ceaiuri.',
+          price: 23.99,
+          stock: 22,
+          category: 'Conserve',
+          image: 'https://images.unsplash.com/photo-1563778084459-859099e48677',
+          quantity: 0
+        },
+        {
+          id: 10,
+          name: 'Pâine de Casă',
+          description: 'Pâine de casă coaptă în cuptor cu lemne, din făină integrală. Rețetă transmisă din generație în generație.',
+          price: 12.99,
+          stock: 40,
+          category: 'Patiserie',
+          image: 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04',
+          quantity: 0
+        },
+        {
+          id: 11,
+          name: 'Mici Tradiționali',
+          description: 'Mici pregătiți după rețeta autentică românească, din amestec de carne de vită, porc și miel, cu usturoi și condimente.',
+          price: 29.99,
+          stock: 50,
+          category: 'Mâncare Gătită',
+          image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd',
+          quantity: 0
+        },
+        {
+          id: 12,
+          name: 'Țuică de Prune',
+          description: 'Țuică naturală de prune, dublu distilată, învechită în butoaie de stejar. Produs premium.',
+          price: 89.99,
+          stock: 10,
+          category: 'Băuturi',
+          image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd',
+          quantity: 0
+        }
+      ],
+      searchQuery: '',
+      selectedCategory: 'Toate',
+      cartStore: useCartStore()
+    }
   },
-  {
-    id: 2,
-    name: 'Cozonac cu Nucă',
-    description: 'Cozonac proaspăt cu umplutură bogată de nucă, stafide și esență de rom. Perfect pentru momentele speciale alături de cei dragi.',
-    price: 45.99,
-    stock: 15,
-    category: 'Patiserie',
-    image: 'https://images.unsplash.com/photo-1586444248902-2f64eddc13df',
-    quantity: 0
+
+  computed: {
+    categories() {
+      return ['Toate', ...new Set(this.products.map(p => p.category))]
+    },
+
+    filteredProducts() {
+      return this.products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                            product.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+        const matchesCategory = this.selectedCategory === 'Toate' || product.category === this.selectedCategory
+        return matchesSearch && matchesCategory
+      })
+    }
   },
-  {
-    id: 3,
-    name: 'Zacuscă de Vinete',
-    description: 'Zacuscă autentică făcută din vinete coapte pe foc, ardei copți, ceapă și ulei de măsline. Perfect pentru un mic dejun tradițional.',
-    price: 19.99,
-    stock: 30,
-    category: 'Conserve',
-    image: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7',
-    quantity: 0
-  },
-  {
-    id: 4,
-    name: 'Plăcintă cu Brânză',
-    description: 'Plăcintă tradițională cu brânză de oaie, mărar și ceapă verde, coaptă în cuptor pe vatră. Gust autentic românesc.',
-    price: 28.99,
-    stock: 12,
-    category: 'Patiserie',
-    image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca',
-    quantity: 0
-  },
-  {
-    id: 5,
-    name: 'Tochitură Moldovenească',
-    description: 'Tochitură cu carne de porc, cârnați afumați și mămăligă, servită cu ou ochi și brânză de oaie. O explozie de savoare.',
-    price: 42.99,
-    stock: 8,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba',
-    quantity: 0
-  },
-  {
-    id: 6,
-    name: 'Tochitură cu Mămăligă',
-    description: 'Tochitură tradițională cu carne de porc, cârnați afumați și brânză de oaie, servită cu mămăligă caldă și ou ochi. O specialitate moldovenească autentică.',
-    price: 32.99,
-    stock: 25,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947',
-    quantity: 0
-  },
-  {
-    id: 7,
-    name: 'Drob de Miel',
-    description: 'Drob tradițional de miel cu verdeață proaspătă, ouă și condimente aromate. Perfect pentru masa de sărbătoare.',
-    price: 25.99,
-    stock: 35,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db',
-    quantity: 0
-  },
-  {
-    id: 8,
-    name: 'Ciorbă de Burtă',
-    description: 'Ciorbă de burtă cremă, cu smântână, usturoi și ardei iute. Servită cu ardei iute proaspăt.',
-    price: 27.99,
-    stock: 18,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd',
-    quantity: 0
-  },
-  {
-    id: 9,
-    name: 'Dulceață de Trandafiri',
-    description: 'Dulceață artizanală din petale de trandafir culese manual. Perfect pentru deserturi și ceaiuri.',
-    price: 23.99,
-    stock: 22,
-    category: 'Conserve',
-    image: 'https://images.unsplash.com/photo-1563778084459-859099e48677',
-    quantity: 0
-  },
-  {
-    id: 10,
-    name: 'Pâine de Casă',
-    description: 'Pâine de casă coaptă în cuptor cu lemne, din făină integrală. Rețetă transmisă din generație în generație.',
-    price: 12.99,
-    stock: 40,
-    category: 'Patiserie',
-    image: 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04',
-    quantity: 0
-  },
-  {
-    id: 11,
-    name: 'Mici Tradiționali',
-    description: 'Mici pregătiți după rețeta autentică românească, din amestec de carne de vită, porc și miel, cu usturoi și condimente.',
-    price: 29.99,
-    stock: 50,
-    category: 'Mâncare Gătită',
-    image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd',
-    quantity: 0
-  },
-  {
-    id: 12,
-    name: 'Țuică de Prune',
-    description: 'Țuică naturală de prune, dublu distilată, învechită în butoaie de stejar. Produs premium.',
-    price: 89.99,
-    stock: 10,
-    category: 'Băuturi',
-    image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd',
-    quantity: 0
+
+  methods: {
+    filterByCategory(category) {
+      this.selectedCategory = category
+    },
+
+    increaseQuantity(product) {
+      if (product.quantity === undefined) product.quantity = 0
+      if (product.quantity < product.stock) product.quantity++
+    },
+
+    decreaseQuantity(product) {
+      if (product.quantity > 0) product.quantity--
+    },
+
+    addToCart(product) {
+      if (product.quantity > 0) {
+        this.cartStore.addToCart(product, product.quantity)
+        product.quantity = 0 // resetăm cantitatea după adăugare
+      }
+    }
   }
-])
-
-const searchQuery = ref('')
-const selectedCategory = ref('Toate')
-const categories = computed(() => ['Toate', ...new Set(products.value.map(p => p.category))])
-
-const filteredProducts = computed(() => {
-  return products.value.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesCategory = selectedCategory.value === 'Toate' || product.category === selectedCategory.value
-    return matchesSearch && matchesCategory
-  })
-})
-
-const filterByCategory = (category) => {
-  selectedCategory.value = category
-}
-
-const increaseQuantity = (product) => {
-  if (product.quantity === undefined) product.quantity = 0
-  if (product.quantity < product.stock) product.quantity++
-}
-
-const decreaseQuantity = (product) => {
-  if (product.quantity > 0) product.quantity--
-}
-
-const addToCart = (product) => {
-  // Next implementation for adding to cart
-  console.log(`Added to cart: ${product.name}, quantity: ${product.quantity}`)
 }
 </script>
 
