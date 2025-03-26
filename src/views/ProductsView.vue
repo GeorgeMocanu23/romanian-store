@@ -91,7 +91,7 @@ export default {
 
   data() {
     return {
-      products: [
+      demoProducts: [
         {
           id: 1,
           name: 'Sarmale Tradiționale',
@@ -213,6 +213,9 @@ export default {
           quantity: 0
         }
       ],
+      dbProducts: [],
+      isLoading: false,
+      error: null,
       searchQuery: '',
       selectedCategory: 'Toate',
       cartStore: useCartStore()
@@ -220,21 +223,49 @@ export default {
   },
 
   computed: {
-    categories() {
-      return ['Toate', ...new Set(this.products.map(p => p.category))]
+    allProducts() {
+      return [...this.demoProducts, ...this.dbProducts];
     },
-
     filteredProducts() {
-      return this.products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            product.description.toLowerCase().includes(this.searchQuery.toLowerCase())
-        const matchesCategory = this.selectedCategory === 'Toate' || product.category === this.selectedCategory
-        return matchesSearch && matchesCategory
-      })
+      let filtered = this.allProducts;
+      
+      // Filtrare după căutare
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(product => 
+          product.name.toLowerCase().includes(query) ||
+          product.description.toLowerCase().includes(query)
+        );
+      }
+      
+      // Filtrare după categorie
+      if (this.selectedCategory !== 'Toate') {
+        filtered = filtered.filter(product => product.category === this.selectedCategory);
+      }
+      
+      return filtered;
+    },
+    categories() {
+      const uniqueCategories = new Set(this.allProducts.map(product => product.category));
+      return ['Toate', ...Array.from(uniqueCategories)];
     }
   },
 
   methods: {
+    async fetchProducts() {
+      try {
+        this.isLoading = true;
+        const response = await fetch('http://localhost:3000/api/products');
+        if (!response.ok) throw new Error('Eroare la obținerea produselor');
+        this.dbProducts = await response.json();
+      } catch (error) {
+        console.error('Error:', error);
+        this.error = 'Nu s-au putut încărca produsele. Vă rugăm să încercați din nou.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     filterByCategory(category) {
       this.selectedCategory = category
     },
@@ -249,11 +280,15 @@ export default {
     },
 
     addToCart(product) {
-      if (product.quantity > 0) {
-        this.cartStore.addToCart(product, product.quantity)
-        product.quantity = 0 // resetăm cantitatea după adăugare
+      if (product.quantity > 0 && product.quantity <= product.stock) {
+        this.cartStore.addToCart(product, parseInt(product.quantity));
+        product.quantity = 0;
       }
     }
+  },
+
+  mounted() {
+    this.fetchProducts();
   }
 }
 </script>

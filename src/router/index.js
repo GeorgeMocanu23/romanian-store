@@ -6,6 +6,7 @@ import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import ProductsView from '../views/ProductsView.vue'
 import CartView from '../views/CartView.vue'
+import AdminProductsView from '../views/AdminProductsView.vue'
 
 const routes = [
   {
@@ -42,12 +43,32 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: CartView,
+  },
+  {
+    path: '/admin/products',
+    name: 'admin-products',
+    component: AdminProductsView,
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+})
+
+// Navigation guard pentru verificarea autentificării
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('token')
+  const isAdmin = localStorage.getItem('isAdmin') === 'true'
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login')
+  } else if (to.meta.requiresAdmin && !isAdmin) {
+    next('/')
+  } else {
+    next()
+  }
 })
 
 export default router

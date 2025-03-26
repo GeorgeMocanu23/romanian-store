@@ -10,7 +10,8 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     userFirstName: (state) => state.user?.firstName || '',
     isAuthenticated: (state) => state.isLoggedIn,
-    userRole: (state) => state.user?.role || null
+    userRole: (state) => state.user?.role || null,
+    isAdmin: (state) => state.user?.role === 'ADMIN'
   },
 
   actions: {
@@ -20,6 +21,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = token
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('isAdmin', user.role === 'ADMIN')
     },
 
     checkLoginStatus() {
@@ -40,6 +42,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       localStorage.removeItem('rememberMe')
+      localStorage.removeItem('isAdmin')
     },
 
     updateUserProfile(userData) {
