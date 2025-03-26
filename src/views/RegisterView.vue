@@ -1,39 +1,88 @@
 <template>
-  <div class="register-container">
-    <div class="register-card">
-      <h2>Înregistrare</h2>
-      <form @submit.prevent="handleRegister" class="register-form">
-        <div class="form-group">
-          <label for="name">Nume complet</label>
-          <input 
-            type="text" 
-            id="name" 
-            v-model="formData.name" 
-            required 
-            placeholder="Introduceți numele complet"
-          />
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Creează cont nou</h1>
+        <p>Alătură-te comunității noastre pentru a descoperi produse tradiționale românești autentice.</p>
+      </div>
+
+      <form @submit.prevent="handleRegister" class="auth-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">
+              <i class="field-icon">👤</i>
+              Prenume
+            </label>
+            <input 
+              type="text" 
+              id="firstName" 
+              v-model="formData.firstName" 
+              required 
+              placeholder="Ion"
+              autocomplete="given-name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">
+              <i class="field-icon">👤</i>
+              Nume
+            </label>
+            <input 
+              type="text" 
+              id="lastName" 
+              v-model="formData.lastName" 
+              required 
+              placeholder="Popescu"
+              autocomplete="family-name"
+            />
+          </div>
         </div>
 
         <div class="form-group">
-          <label for="email">Email</label>
+          <label for="email">
+            <i class="field-icon">📧</i>
+            Email
+          </label>
           <input 
             type="email" 
             id="email" 
             v-model="formData.email" 
             required 
-            placeholder="Introduceți adresa de email"
+            placeholder="exemplu@email.com"
+            autocomplete="email"
           />
         </div>
 
         <div class="form-group">
-          <label for="password">Parolă</label>
+          <label for="phone">
+            <i class="field-icon">📱</i>
+            Telefon
+          </label>
+          <input 
+            type="tel" 
+            id="phone" 
+            v-model="formData.phone" 
+            required 
+            placeholder="07XX XXX XXX"
+            pattern="[0-9]{10}"
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">
+            <i class="field-icon">🔒</i>
+            Parolă
+          </label>
           <div class="password-input">
             <input 
               :type="showPassword ? 'text' : 'password'" 
               id="password" 
               v-model="formData.password" 
               required 
-              placeholder="Introduceți parola"
+              placeholder="Minim 8 caractere"
+              autocomplete="new-password"
             />
             <button 
               type="button" 
@@ -45,49 +94,10 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="confirmPassword">Confirmare parolă</label>
-          <div class="password-input">
-            <input 
-              :type="showPassword ? 'text' : 'password'" 
-              id="confirmPassword" 
-              v-model="formData.confirmPassword" 
-              required 
-              placeholder="Confirmați parola"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="phone">Telefon</label>
-          <input 
-            type="tel" 
-            id="phone" 
-            v-model="formData.phone" 
-            required 
-            placeholder="Introduceți numărul de telefon"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="address">Adresă</label>
-          <textarea 
-            id="address" 
-            v-model="formData.address" 
-            required 
-            placeholder="Introduceți adresa completă"
-            rows="3"
-          ></textarea>
-        </div>
-
-        <div class="form-group checkbox-group">
+        <div class="form-group terms">
           <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              v-model="formData.terms" 
-              required
-            />
-            Sunt de acord cu <a href="#" class="terms-link">Termenii și condițiile</a>
+            <input type="checkbox" v-model="formData.acceptTerms" required>
+            <span>Accept <a href="#" class="terms-link">Termenii și Condițiile</a> și <a href="#" class="terms-link">Politica de Confidențialitate</a></span>
           </label>
         </div>
 
@@ -95,18 +105,19 @@
           {{ errorMessage }}
         </div>
 
-        <button 
-          type="submit" 
-          class="register-btn"
-          :disabled="isLoading"
-        >
-          {{ isLoading ? 'Se înregistrează...' : 'Înregistrare' }}
+        <button type="submit" class="submit-btn" :disabled="isLoading || !formData.acceptTerms">
+          <span v-if="!isLoading">Creează cont</span>
+          <span v-else class="loading-spinner">⌛</span>
         </button>
-
-        <div class="login-link">
-          Aveți deja un cont? <router-link to="/login">Autentificați-vă</router-link>
-        </div>
       </form>
+
+      <div class="auth-footer">
+        <p>Ai deja cont?</p>
+        <router-link to="/login" class="login-link">
+          Autentifică-te aici
+          <span class="arrow">→</span>
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -120,13 +131,12 @@ export default {
   data() {
     return {
       formData: {
-        name: '',
+        firstName: '',
+        lastName: '',
         email: '',
-        password: '',
-        confirmPassword: '',
         phone: '',
-        address: '',
-        terms: false
+        password: '',
+        acceptTerms: false
       },
       showPassword: false,
       isLoading: false,
@@ -141,12 +151,7 @@ export default {
     },
 
     async handleRegister() {
-      if (this.formData.password !== this.formData.confirmPassword) {
-        this.errorMessage = 'Parolele nu coincid'
-        return
-      }
-
-      if (!this.formData.terms) {
+      if (!this.formData.acceptTerms) {
         this.errorMessage = 'Trebuie să acceptați termenii și condițiile'
         return
       }
@@ -156,11 +161,11 @@ export default {
 
       try {
         await this.authStore.register({
-          name: this.formData.name,
+          firstName: this.formData.firstName,
+          lastName: this.formData.lastName,
           email: this.formData.email,
-          password: this.formData.password,
           phone: this.formData.phone,
-          address: this.formData.address
+          password: this.formData.password
         })
         
         this.$router.push('/login')
@@ -181,7 +186,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   margin-top: 54px;
   width: 100vw;
   margin-left: calc(50% - 50vw);
@@ -299,11 +304,16 @@ export default {
 .terms-link {
   color: #2577c8;
   text-decoration: none;
-  font-weight: 500;
 }
 
 .terms-link:hover {
   text-decoration: underline;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .submit-btn {
@@ -335,12 +345,13 @@ export default {
 }
 
 .loading-spinner {
-  animation: spin 1s infinite linear;
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .auth-footer {
