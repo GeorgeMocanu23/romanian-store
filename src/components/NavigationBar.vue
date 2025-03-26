@@ -38,10 +38,10 @@
             </button>
           </div>
 
-          <div class="cart-btn">
+          <RouterLink to="/cart" class="cart-btn">
             <i class="nav-icon">🛒</i>
-            <span class="cart-count">0</span>
-          </div>
+            <span v-if="cartStore.itemCount > 0" class="cart-count">{{ cartStore.itemCount }}</span>
+          </RouterLink>
         </div>
       </div>
     </nav>
@@ -50,19 +50,28 @@
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import logo from '@/assets/romanian-flag.svg'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 
 onMounted(() => {
   authStore.checkLoginStatus()
+  cartStore.setAuthenticated(authStore.isAuthenticated)
+})
+
+// Sincronizăm starea de autentificare între store-uri
+watch(() => authStore.isAuthenticated, (newValue) => {
+  cartStore.setAuthenticated(newValue)
 })
 
 const handleLogout = () => {
   authStore.logout()
+  cartStore.setAuthenticated(false)
   router.push('/login')
 }
 </script>

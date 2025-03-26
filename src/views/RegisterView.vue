@@ -1,162 +1,175 @@
 <template>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h1>Creează cont nou</h1>
-        <p>Alătură-te comunității noastre pentru a descoperi produse tradiționale românești autentice.</p>
-      </div>
-
-      <form @submit.prevent="register" class="auth-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="firstName">
-              <i class="field-icon">👤</i>
-              Prenume
-            </label>
-            <input 
-              type="text" 
-              id="firstName" 
-              v-model="firstName" 
-              required 
-              placeholder="Ion"
-              autocomplete="given-name"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="lastName">
-              <i class="field-icon">👤</i>
-              Nume
-            </label>
-            <input 
-              type="text" 
-              id="lastName" 
-              v-model="lastName" 
-              required 
-              placeholder="Popescu"
-              autocomplete="family-name"
-            />
-          </div>
+  <div class="register-container">
+    <div class="register-card">
+      <h2>Înregistrare</h2>
+      <form @submit.prevent="handleRegister" class="register-form">
+        <div class="form-group">
+          <label for="name">Nume complet</label>
+          <input 
+            type="text" 
+            id="name" 
+            v-model="formData.name" 
+            required 
+            placeholder="Introduceți numele complet"
+          />
         </div>
 
         <div class="form-group">
-          <label for="email">
-            <i class="field-icon">📧</i>
-            Email
-          </label>
+          <label for="email">Email</label>
           <input 
             type="email" 
             id="email" 
-            v-model="email" 
+            v-model="formData.email" 
             required 
-            placeholder="exemplu@email.com"
-            autocomplete="email"
+            placeholder="Introduceți adresa de email"
           />
         </div>
 
         <div class="form-group">
-          <label for="phone">
-            <i class="field-icon">📱</i>
-            Telefon
-          </label>
-          <input 
-            type="tel" 
-            id="phone" 
-            v-model="phone" 
-            required 
-            placeholder="07XX XXX XXX"
-            pattern="[0-9]{10}"
-            autocomplete="tel"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="password">
-            <i class="field-icon">🔒</i>
-            Parolă
-          </label>
+          <label for="password">Parolă</label>
           <div class="password-input">
             <input 
               :type="showPassword ? 'text' : 'password'" 
               id="password" 
-              v-model="password" 
+              v-model="formData.password" 
               required 
-              placeholder="Minim 8 caractere"
-              autocomplete="new-password"
+              placeholder="Introduceți parola"
             />
             <button 
               type="button" 
-              class="toggle-password"
-              @click="showPassword = !showPassword"
+              class="toggle-password" 
+              @click="togglePassword"
             >
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
           </div>
         </div>
 
-        <div class="form-group terms">
+        <div class="form-group">
+          <label for="confirmPassword">Confirmare parolă</label>
+          <div class="password-input">
+            <input 
+              :type="showPassword ? 'text' : 'password'" 
+              id="confirmPassword" 
+              v-model="formData.confirmPassword" 
+              required 
+              placeholder="Confirmați parola"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Telefon</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            v-model="formData.phone" 
+            required 
+            placeholder="Introduceți numărul de telefon"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="address">Adresă</label>
+          <textarea 
+            id="address" 
+            v-model="formData.address" 
+            required 
+            placeholder="Introduceți adresa completă"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group checkbox-group">
           <label class="checkbox-label">
-            <input type="checkbox" v-model="acceptTerms" required>
-            <span>Accept <a href="#" class="terms-link">Termenii și Condițiile</a> și <a href="#" class="terms-link">Politica de Confidențialitate</a></span>
+            <input 
+              type="checkbox" 
+              v-model="formData.terms" 
+              required
+            />
+            Sunt de acord cu <a href="#" class="terms-link">Termenii și condițiile</a>
           </label>
         </div>
 
-        <button type="submit" class="submit-btn" :disabled="isLoading || !acceptTerms">
-          <span v-if="!isLoading">Creează cont</span>
-          <span v-else class="loading-spinner">⌛</span>
-        </button>
-      </form>
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
 
-      <div class="auth-footer">
-        <p>Ai deja cont?</p>
-        <router-link to="/login" class="login-link">
-          Autentifică-te aici
-          <span class="arrow">→</span>
-        </router-link>
-      </div>
+        <button 
+          type="submit" 
+          class="register-btn"
+          :disabled="isLoading"
+        >
+          {{ isLoading ? 'Se înregistrează...' : 'Înregistrare' }}
+        </button>
+
+        <div class="login-link">
+          Aveți deja un cont? <router-link to="/login">Autentificați-vă</router-link>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
+<script>
+import { useAuthStore } from '@/stores/auth'
 
-const router = useRouter()
-const firstName = ref('')
-const lastName = ref('')
-const email = ref('')
-const phone = ref('')
-const password = ref('')
-const showPassword = ref(false)
-const acceptTerms = ref(false)
-const isLoading = ref(false)
+export default {
+  name: 'RegisterView',
 
-const register = async () => {
-  try {
-    isLoading.value = true
-    const response = await axios.post('http://localhost:3000/register', {
-      email: email.value,
-      password: password.value,
-      firstName: firstName.value,
-      lastName: lastName.value,
-      phone: phone.value
-    })
-    
-    localStorage.setItem('token', response.data.token)
-    router.push('/products')
-  } catch (error) {
-    console.error('Error during registration:', error)
-    if (error.response) {
-      alert(error.response.data.message || 'Error during registration')
-    } else if (error.request) {
-      alert('Could not contact the server. Check your connection.')
-    } else {
-      alert('An unexpected error occurred')
+  data() {
+    return {
+      formData: {
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        address: '',
+        terms: false
+      },
+      showPassword: false,
+      isLoading: false,
+      errorMessage: '',
+      authStore: useAuthStore()
     }
-  } finally {
-    isLoading.value = false
+  },
+
+  methods: {
+    togglePassword() {
+      this.showPassword = !this.showPassword
+    },
+
+    async handleRegister() {
+      if (this.formData.password !== this.formData.confirmPassword) {
+        this.errorMessage = 'Parolele nu coincid'
+        return
+      }
+
+      if (!this.formData.terms) {
+        this.errorMessage = 'Trebuie să acceptați termenii și condițiile'
+        return
+      }
+
+      this.isLoading = true
+      this.errorMessage = ''
+
+      try {
+        await this.authStore.register({
+          name: this.formData.name,
+          email: this.formData.email,
+          password: this.formData.password,
+          phone: this.formData.phone,
+          address: this.formData.address
+        })
+        
+        this.$router.push('/login')
+      } catch (error) {
+        this.errorMessage = error.message || 'A apărut o eroare la înregistrare'
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 }
 </script>

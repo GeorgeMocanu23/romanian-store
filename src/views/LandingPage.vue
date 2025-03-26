@@ -57,62 +57,69 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+<script>
+export default {
+  name: 'LandingPage',
 
-const slides = ref([
-  {
-    id: 1,
-    title: 'Produse Tradiționale Românești',
-    description: 'Gustul autentic al bucătăriei românești',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+  data() {
+    return {
+      slides: [
+        {
+          id: 1,
+          title: 'Produse Tradiționale Românești',
+          description: 'Gustul autentic al bucătăriei românești',
+          image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+        },
+        {
+          id: 2,
+          title: 'Cozonaci Proaspeți',
+          description: 'Făcuți cu dragoste și ingrediente naturale',
+          image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff'
+        },
+        {
+          id: 3,
+          title: 'Preparate ca la Mama Acasă',
+          description: 'Rețete tradiționale transmise din generație în generație',
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'
+        }
+      ],
+      currentSlide: 0,
+      timer: null
+    }
   },
-  {
-    id: 2,
-    title: 'Cozonaci Proaspeți',
-    description: 'Făcuți cu dragoste și ingrediente naturale',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff'
+
+  methods: {
+    nextSlide() {
+      this.currentSlide = (this.currentSlide + 1) % this.slides.length
+    },
+
+    prevSlide() {
+      this.currentSlide = (this.currentSlide - 1 + this.slides.length) % this.slides.length
+    },
+
+    goToSlide(index) {
+      this.currentSlide = index
+    },
+
+    startSlideShow() {
+      this.timer = setInterval(this.nextSlide, 5000)
+    },
+
+    handleImageError(event) {
+      event.target.src = 'https://picsum.photos/1200/800'
+    }
   },
-  {
-    id: 3,
-    title: 'Preparate ca la Mama Acasă',
-    description: 'Rețete tradiționale transmise din generație în generație',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'
+
+  mounted() {
+    this.startSlideShow()
+  },
+
+  beforeUnmount() {
+    if (this.timer) {
+      clearInterval(this.timer)
+    }
   }
-])
-
-const currentSlide = ref(0)
-const timer = ref(null)
-
-const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % slides.value.length
 }
-
-const prevSlide = () => {
-  currentSlide.value = (currentSlide.value - 1 + slides.value.length) % slides.value.length
-}
-
-const goToSlide = (index) => {
-  currentSlide.value = index
-}
-
-const startSlideShow = () => {
-  timer.value = setInterval(nextSlide, 5000)
-}
-
-const handleImageError = (event) => {
-  event.target.src = 'https://picsum.photos/1200/800'
-}
-
-onMounted(() => {
-  startSlideShow()
-})
-
-onUnmounted(() => {
-  if (timer.value) {
-    clearInterval(timer.value)
-  }
-})
 </script>
 
 <style scoped>
@@ -223,6 +230,15 @@ onUnmounted(() => {
 .indicator {
   width: clamp(8px, 1.5vw, 12px);
   height: clamp(8px, 1.5vw, 12px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.indicator.active {
+  background: white;
 }
 
 /* Welcome Section Styles */

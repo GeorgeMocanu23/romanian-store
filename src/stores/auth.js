@@ -1,38 +1,52 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 
-export const useAuthStore = defineStore('auth', () => {
-  const isLoggedIn = ref(false)
-  const userFirstName = ref('')
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    isLoggedIn: false,
+    user: null,
+    token: null
+  }),
 
-  function checkLoginStatus() {
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-    isLoggedIn.value = !!token
-    if (user) {
-      const userData = JSON.parse(user)
-      userFirstName.value = userData.firstName
+  getters: {
+    userFirstName: (state) => state.user?.firstName || '',
+    isAuthenticated: (state) => state.isLoggedIn,
+    userRole: (state) => state.user?.role || null
+  },
+
+  actions: {
+    setLoginStatus(user, token) {
+      this.isLoggedIn = true
+      this.user = user
+      this.token = token
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+    },
+
+    checkLoginStatus() {
+      const token = localStorage.getItem('token')
+      const user = localStorage.getItem('user')
+      
+      if (token && user) {
+        this.isLoggedIn = true
+        this.token = token
+        this.user = JSON.parse(user)
+      }
+    },
+
+    logout() {
+      this.isLoggedIn = false
+      this.user = null
+      this.token = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('rememberMe')
+    },
+
+    updateUserProfile(userData) {
+      if (this.user) {
+        this.user = { ...this.user, ...userData }
+        localStorage.setItem('user', JSON.stringify(this.user))
+      }
     }
-  }
-
-  function setLoginStatus(user) {
-    isLoggedIn.value = true
-    userFirstName.value = user.firstName
-  }
-
-  function logout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('rememberMe')
-    isLoggedIn.value = false
-    userFirstName.value = ''
-  }
-
-  return {
-    isLoggedIn,
-    userFirstName,
-    checkLoginStatus,
-    setLoginStatus,
-    logout
   }
 }) 

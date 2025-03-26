@@ -2,44 +2,40 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>Bine ai revenit!</h1>
-        <p>Ne bucurăm să te revedem. Te rugăm să te autentifici pentru a continua.</p>
+        <h1>Autentificare</h1>
+        <p>Bine ai venit! Te rugăm să te autentifici pentru a continua.</p>
       </div>
 
       <form @submit.prevent="login" class="auth-form">
         <div class="form-group">
-          <label for="email">
+          <label>
             <i class="field-icon">📧</i>
             Email
           </label>
           <input 
-            type="email" 
-            id="email" 
             v-model="email" 
-            required 
-            placeholder="exemplu@email.com"
-            autocomplete="email"
+            type="email" 
+            placeholder="Introdu adresa ta de email"
+            required
           />
         </div>
 
         <div class="form-group">
-          <label for="password">
+          <label>
             <i class="field-icon">🔒</i>
-            Parolă
+            Parola
           </label>
           <div class="password-input">
             <input 
-              :type="showPassword ? 'text' : 'password'" 
-              id="password" 
               v-model="password" 
-              required 
-              placeholder="Introdu parola"
-              autocomplete="current-password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Introdu parola ta"
+              required
             />
             <button 
               type="button" 
               class="toggle-password"
-              @click="showPassword = !showPassword"
+              @click="togglePassword"
             >
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -48,7 +44,10 @@
 
         <div class="form-options">
           <label class="remember-me">
-            <input type="checkbox" v-model="rememberMe">
+            <input 
+              type="checkbox" 
+              v-model="rememberMe"
+            />
             <span>Ține-mă minte</span>
           </label>
           <a href="#" class="forgot-password">Ai uitat parola?</a>
@@ -56,9 +55,13 @@
 
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
-        <button type="submit" class="submit-btn" :disabled="isLoading">
-          <span v-if="!isLoading">Autentificare</span>
-          <span v-else class="loading-spinner">⌛</span>
+        <button 
+          type="submit" 
+          class="submit-btn"
+          :disabled="isLoading"
+        >
+          <span v-if="isLoading" class="loading-spinner">⚡</span>
+          <span v-else>Autentificare</span>
         </button>
       </form>
 
@@ -73,55 +76,60 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
+<script>
 import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 
-const router = useRouter()
-const authStore = useAuthStore()
-const email = ref('')
-const password = ref('')
-const rememberMe = ref(false)
-const showPassword = ref(false)
-const isLoading = ref(false)
-const errorMessage = ref('')
+export default {
+  name: 'LoginView',
 
-const login = async () => {
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-    
-    if (!email.value || !password.value) {
-      errorMessage.value = 'Te rugăm să completezi toate câmpurile'
-      return
+  data() {
+    return {
+      email: '',
+      password: '',
+      rememberMe: false,
+      showPassword: false,
+      isLoading: false,
+      errorMessage: '',
+      authStore: useAuthStore()
     }
+  },
 
-    const response = await axios.post('http://localhost:3000/login', {
-      email: email.value,
-      password: password.value
-    })
-    
-    localStorage.setItem('token', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data.user))
-    if (rememberMe.value) {
-      localStorage.setItem('rememberMe', 'true')
+  methods: {
+    togglePassword() {
+      this.showPassword = !this.showPassword
+    },
+
+    async login() {
+      try {
+        this.isLoading = true
+        this.errorMessage = ''
+        
+        if (!this.email || !this.password) {
+          this.errorMessage = 'Te rugăm să completezi toate câmpurile'
+          return
+        }
+
+        const response = await axios.post('http://localhost:3000/login', {
+          email: this.email,
+          password: this.password
+        })
+        
+        this.authStore.setLoginStatus(response.data.user, response.data.token)
+        this.$router.push('/products')
+      } catch (error) {
+        console.error('Eroare la autentificare:', error)
+        if (error.response) {
+          this.errorMessage = error.response.data.message || 'Eroare la autentificare'
+        } else if (error.request) {
+          this.errorMessage = 'Nu s-a putut contacta serverul. Verificați conexiunea.'
+        } else {
+          this.errorMessage = 'A apărut o eroare neașteptată'
+        }
+      } finally {
+        this.isLoading = false
+      }
     }
-    
-    authStore.setLoginStatus(response.data.user)
-    router.push('/products')
-  } catch (error) {
-    console.error('Eroare la autentificare:', error)
-    if (error.response) {
-      errorMessage.value = error.response.data.message || 'Eroare la autentificare'
-    } else if (error.request) {
-      errorMessage.value = 'Nu s-a putut contacta serverul. Verificați conexiunea.'
-    } else {
-      errorMessage.value = 'A apărut o eroare neașteptată'
-    }
-  } finally {
-    isLoading.value = false
   }
 }
 </script>
