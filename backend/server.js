@@ -244,7 +244,7 @@ app.post('/register', async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the new user
+    // Create the new user with role (default to CUSTOMER if not provided)
     const user = await prisma.user.create({
       data: {
         email,
@@ -252,7 +252,7 @@ app.post('/register', async (req, res) => {
         firstName,
         lastName,
         phone,
-        role,
+        role: role || 'CUSTOMER',
       },
     });
 

@@ -6,6 +6,19 @@
         <p>Bine ai venit! Te rugăm să te autentifici pentru a continua.</p>
       </div>
 
+      <!-- Notificări -->
+      <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
+        <div class="notification-icon">
+          <i v-if="notification.type === 'success'">✓</i>
+          <i v-else-if="notification.type === 'error'">✗</i>
+          <i v-else>ℹ</i>
+        </div>
+        <div class="notification-content">
+          <p>{{ notification.message }}</p>
+        </div>
+        <button class="notification-close" @click="hideNotification">×</button>
+      </div>
+
       <form @submit.prevent="login" class="auth-form">
         <div class="form-group">
           <label>
@@ -53,8 +66,6 @@
           <a href="#" class="forgot-password">Ai uitat parola?</a>
         </div>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-
         <button 
           type="submit" 
           class="submit-btn"
@@ -79,56 +90,101 @@
 <script>
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default {
   name: 'LoginView',
 
-  data() {
-    return {
-      email: '',
-      password: '',
-      rememberMe: false,
-      showPassword: false,
-      isLoading: false,
-      errorMessage: '',
-      authStore: useAuthStore()
+  setup() {
+    const email = ref('')
+    const password = ref('')
+    const rememberMe = ref(false)
+    const showPassword = ref(false)
+    const isLoading = ref(false)
+    const authStore = useAuthStore()
+    const router = useRouter()
+
+    // State pentru notificări
+    const notification = ref({
+      show: false,
+      message: '',
+      type: 'success', // success, error, info
+      timeout: null
+    })
+
+    // Funcție pentru afișarea notificărilor
+    const showNotification = (message, type = 'success') => {
+      // Resetăm timeout-ul existent dacă există
+      if (notification.value.timeout) {
+        clearTimeout(notification.value.timeout)
+      }
+      
+      // Setăm noua notificare
+      notification.value = {
+        show: true,
+        message,
+        type,
+        timeout: setTimeout(() => {
+          notification.value.show = false
+        }, 5000) // Dispare după 5 secunde
+      }
     }
-  },
 
-  methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword
-    },
+    // Funcție pentru ascunderea notificării
+    const hideNotification = () => {
+      notification.value.show = false
+      if (notification.value.timeout) {
+        clearTimeout(notification.value.timeout)
+      }
+    }
 
-    async login() {
+    const togglePassword = () => {
+      showPassword.value = !showPassword.value
+    }
+
+    const login = async () => {
       try {
-        this.isLoading = true
-        this.errorMessage = ''
+        isLoading.value = true
         
-        if (!this.email || !this.password) {
-          this.errorMessage = 'Te rugăm să completezi toate câmpurile'
+        if (!email.value || !password.value) {
+          showNotification('Te rugăm să completezi toate câmpurile', 'error')
           return
         }
 
-        const response = await axios.post('http://localhost:3000/login', {
-          email: this.email,
-          password: this.password
-        })
-        
-        this.authStore.setLoginStatus(response.data.user, response.data.token)
-        this.$router.push('/products')
-      } catch (error) {
-        console.error('Eroare la autentificare:', error)
-        if (error.response) {
-          this.errorMessage = error.response.data.message || 'Eroare la autentificare'
-        } else if (error.request) {
-          this.errorMessage = 'Nu s-a putut contacta serverul. Verificați conexiunea.'
-        } else {
-          this.errorMessage = 'A apărut o eroare neașteptată'
+        try {
+          await authStore.login({
+            email: email.value,
+            password: password.value
+          })
+          
+          showNotification('Autentificare reușită! Vei fi redirecționat...', 'success')
+          
+          // Redirecționare după un scurt delay
+          setTimeout(() => {
+            router.push('/products')
+          }, 1500)
+        } catch (error) {
+          console.error('Eroare la autentificare:', error)
+          showNotification(error.message || 'Eroare la autentificare. Verifică datele introduse.', 'error')
         }
       } finally {
-        this.isLoading = false
+        isLoading.value = false
       }
+    }
+
+    return {
+      email,
+      password,
+      rememberMe,
+      showPassword,
+      isLoading,
+      authStore,
+      notification,
+      showNotification,
+      hideNotification,
+      togglePassword,
+      login
     }
   }
 }
@@ -146,6 +202,82 @@ export default {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+}
+
+/* Stiluri pentru notificări */
+.notification {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.notification-success {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.notification-error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.notification-info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  font-weight: bold;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+  opacity: 1;
 }
 
 .auth-card {
@@ -355,13 +487,5 @@ export default {
     gap: 1rem;
     align-items: flex-start;
   }
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  text-align: left;
 }
 </style>

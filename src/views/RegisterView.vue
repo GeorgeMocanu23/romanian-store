@@ -6,6 +6,19 @@
         <p>Alătură-te comunității noastre pentru a descoperi produse tradiționale românești autentice.</p>
       </div>
 
+      <!-- Notificări -->
+      <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
+        <div class="notification-icon">
+          <i v-if="notification.type === 'success'">✓</i>
+          <i v-else-if="notification.type === 'error'">✗</i>
+          <i v-else>ℹ</i>
+        </div>
+        <div class="notification-content">
+          <p>{{ notification.message }}</p>
+        </div>
+        <button class="notification-close" @click="hideNotification">×</button>
+      </div>
+
       <form @submit.prevent="handleRegister" class="auth-form">
         <div class="form-row">
           <div class="form-group">
@@ -94,15 +107,28 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="confirmPassword">
+            <i class="field-icon">🔒</i>
+            Confirmă parola
+          </label>
+          <div class="password-input">
+            <input 
+              :type="showPassword ? 'text' : 'password'" 
+              id="confirmPassword" 
+              v-model="formData.confirmPassword" 
+              required 
+              placeholder="Reintrodu parola"
+              autocomplete="new-password"
+            />
+          </div>
+        </div>
+
         <div class="form-group terms">
           <label class="checkbox-label">
             <input type="checkbox" v-model="formData.acceptTerms" required>
             <span>Accept <a href="#" class="terms-link">Termenii și Condițiile</a> și <a href="#" class="terms-link">Politica de Confidențialitate</a></span>
           </label>
-        </div>
-
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
         </div>
 
         <button type="submit" class="submit-btn" :disabled="isLoading || !formData.acceptTerms">
@@ -124,56 +150,116 @@
 
 <script>
 import { useAuthStore } from '@/stores/auth'
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default {
   name: 'RegisterView',
 
-  data() {
-    return {
-      formData: {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        password: '',
-        acceptTerms: false
-      },
-      showPassword: false,
-      isLoading: false,
-      errorMessage: '',
-      authStore: useAuthStore()
+  setup() {
+    const formData = reactive({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      acceptTerms: false
+    })
+    
+    const showPassword = ref(false)
+    const isLoading = ref(false)
+    const authStore = useAuthStore()
+    const router = useRouter()
+
+    // State pentru notificări
+    const notification = ref({
+      show: false,
+      message: '',
+      type: 'success', // success, error, info
+      timeout: null
+    })
+
+    // Funcție pentru afișarea notificărilor
+    const showNotification = (message, type = 'success') => {
+      // Resetăm timeout-ul existent dacă există
+      if (notification.value.timeout) {
+        clearTimeout(notification.value.timeout)
+      }
+      
+      // Setăm noua notificare
+      notification.value = {
+        show: true,
+        message,
+        type,
+        timeout: setTimeout(() => {
+          notification.value.show = false
+        }, 5000) // Dispare după 5 secunde
+      }
     }
-  },
 
-  methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword
-    },
+    // Funcție pentru ascunderea notificării
+    const hideNotification = () => {
+      notification.value.show = false
+      if (notification.value.timeout) {
+        clearTimeout(notification.value.timeout)
+      }
+    }
 
-    async handleRegister() {
-      if (!this.formData.acceptTerms) {
-        this.errorMessage = 'Trebuie să acceptați termenii și condițiile'
+    const togglePassword = () => {
+      showPassword.value = !showPassword.value
+    }
+
+    const handleRegister = async () => {
+      if (!formData.acceptTerms) {
+        showNotification('Trebuie să acceptați termenii și condițiile', 'error')
         return
       }
 
-      this.isLoading = true
-      this.errorMessage = ''
+      if (formData.password !== formData.confirmPassword) {
+        showNotification('Parolele introduse nu coincid', 'error')
+        return
+      }
+
+      if (formData.password.length < 8) {
+        showNotification('Parola trebuie să conțină minim 8 caractere', 'error')
+        return
+      }
+
+      isLoading.value = true
 
       try {
-        await this.authStore.register({
-          firstName: this.formData.firstName,
-          lastName: this.formData.lastName,
-          email: this.formData.email,
-          phone: this.formData.phone,
-          password: this.formData.password
+        await authStore.register({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password
         })
         
-        this.$router.push('/login')
+        showNotification('Cont creat cu succes! Vei fi redirecționat către pagina de autentificare.', 'success')
+        
+        // Redirecționăm după un scurt delay
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
       } catch (error) {
-        this.errorMessage = error.message || 'A apărut o eroare la înregistrare'
+        console.error('Eroare la înregistrare:', error)
+        showNotification(error.message || 'A apărut o eroare la înregistrare', 'error')
       } finally {
-        this.isLoading = false
+        isLoading.value = false
       }
+    }
+
+    return {
+      formData,
+      showPassword,
+      isLoading,
+      notification,
+      showNotification,
+      hideNotification,
+      togglePassword,
+      handleRegister
     }
   }
 }
@@ -191,6 +277,82 @@ export default {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+}
+
+/* Stiluri pentru notificări */
+.notification {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.notification-success {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.notification-error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.notification-info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  font-weight: bold;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+  opacity: 1;
 }
 
 .auth-card {
