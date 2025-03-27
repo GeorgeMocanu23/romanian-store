@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,6 +16,36 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    async register(userData) {
+      try {
+        const dataWithRole = {
+          ...userData,
+          role: 'CUSTOMER'
+        }
+        
+        const response = await axios.post('http://localhost:3000/register', dataWithRole)
+        return response.data
+      } catch (error) {
+        if (error.response) {
+          throw new Error(error.response.data.error || 'Eroare la înregistrare')
+        }
+        throw new Error('Eroare de conexiune la server')
+      }
+    },
+
+    async login(credentials) {
+      try {
+        const response = await axios.post('http://localhost:3000/login', credentials)
+        this.setLoginStatus(response.data.user, response.data.token)
+        return response.data
+      } catch (error) {
+        if (error.response) {
+          throw new Error(error.response.data.error || 'Autentificare eșuată')
+        }
+        throw new Error('Eroare de conexiune la server')
+      }
+    },
+
     setLoginStatus(user, token) {
       this.isLoggedIn = true
       this.user = user
