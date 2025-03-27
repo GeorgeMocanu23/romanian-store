@@ -31,11 +31,27 @@
           </RouterLink>
           
           <div v-else class="user-section">
-            <span class="welcome-text">Bun venit, {{ authStore.userFirstName }}</span>
-            <button @click="handleLogout" class="auth-btn logout-btn">
-              <i class="nav-icon">🚪</i>
-              <span>Deconectare</span>
-            </button>
+            <div class="dropdown">
+              <button class="user-btn">
+                <i class="nav-icon">👤</i>
+                <span>Bun venit, {{ authStore.userFirstName }}</span>
+                <i class="nav-icon dropdown-icon">▼</i>
+              </button>
+              <div class="dropdown-content">
+                <RouterLink to="/profile" class="dropdown-item">
+                  <i class="nav-icon">👤</i>
+                  <span>Profil</span>
+                </RouterLink>
+                <RouterLink v-if="authStore.isAdmin" to="/admin/products" class="dropdown-item">
+                  <i class="nav-icon">⚙️</i>
+                  <span>Admin Panel</span>
+                </RouterLink>
+                <button @click="handleLogout" class="dropdown-item logout-item">
+                  <i class="nav-icon">🚪</i>
+                  <span>Deconectare</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <RouterLink to="/cart" class="cart-btn">
@@ -219,12 +235,21 @@ const handleLogout = () => {
 
 .cart-btn {
   position: relative;
-  padding: 0.5rem;
+  padding: 0.5rem 1.25rem;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  background: transparent;
+  color: #2577c8;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .cart-btn:hover {
+  background: rgba(37, 119, 200, 0.1);
+  color: #1b5a9d;
   transform: translateY(-2px);
 }
 
@@ -245,15 +270,100 @@ const handleLogout = () => {
 }
 
 .user-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  position: relative;
 }
 
-.welcome-text {
-  color: #2577c8;
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
   font-weight: 500;
-  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-size: 1rem;
+  background: transparent;
+  color: #2577c8;
+}
+
+.user-btn:hover {
+  background: rgba(37, 119, 200, 0.1);
+  transform: translateY(-2px);
+}
+
+.dropdown-icon {
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: white;
+  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+/* Adăugăm un pseudo-element pentru a acoperi spațiul */
+.dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 0.5rem;
+  background: transparent;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown:hover::after {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #555;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: rgba(37, 119, 200, 0.1);
+  color: #2577c8;
+}
+
+.logout-item {
+  color: #dc3545;
+  border-top: 1px solid #eee;
+}
+
+.logout-item:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
 }
 
 @media (max-width: 768px) {
@@ -313,8 +423,16 @@ const handleLogout = () => {
     font-size: 1.1rem;
   }
 
-  .welcome-text {
+  .user-btn span {
     display: none;
+  }
+  
+  .dropdown-content {
+    min-width: 160px;
+  }
+  
+  .dropdown-item span {
+    display: block;
   }
 }
 
