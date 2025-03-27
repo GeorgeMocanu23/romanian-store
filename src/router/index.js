@@ -7,6 +7,7 @@ import LoginView from '../views/LoginView.vue'
 import ProductsView from '../views/ProductsView.vue'
 import CartView from '../views/CartView.vue'
 import AdminProductsView from '../views/AdminProductsView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const routes = [
   {
@@ -43,6 +44,12 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: CartView,
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfileView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/admin/products',
