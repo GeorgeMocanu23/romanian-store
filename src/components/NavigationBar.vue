@@ -31,24 +31,25 @@
           </RouterLink>
           
           <div v-else class="user-section">
-            <div class="dropdown">
-              <button class="user-btn">
+            <div class="user-dropdown">
+              <button class="user-menu-btn" @click="showDropdown = !showDropdown">
                 <i class="nav-icon">👤</i>
-                <span>Bun venit, {{ authStore.userFirstName }}</span>
-                <i class="nav-icon dropdown-icon">▼</i>
+                {{ authStore.user?.firstName || 'Cont' }}
+                <i class="nav-icon">▼</i>
               </button>
-              <div class="dropdown-content">
-                <RouterLink to="/profile" class="dropdown-item">
+              
+              <div v-if="showDropdown" class="dropdown-menu">
+                <button @click="handleNavigation('/profile')" class="dropdown-item">
                   <i class="nav-icon">👤</i>
-                  <span>Profil</span>
-                </RouterLink>
-                <RouterLink v-if="authStore.isAdmin" to="/admin/products" class="dropdown-item">
+                  Profil
+                </button>
+                <button v-if="authStore.isAdmin" @click="handleNavigation('/admin/products')" class="dropdown-item">
                   <i class="nav-icon">⚙️</i>
-                  <span>Admin Panel</span>
-                </RouterLink>
-                <button @click="handleLogout" class="dropdown-item logout-item">
+                  Admin Panel
+                </button>
+                <button @click="handleLogout" class="dropdown-item">
                   <i class="nav-icon">🚪</i>
-                  <span>Deconectare</span>
+                  Deconectare
                 </button>
               </div>
             </div>
@@ -66,7 +67,7 @@
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 import logo from '@/assets/romanian-flag.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
@@ -74,6 +75,7 @@ import { useCartStore } from '@/stores/cart'
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const showDropdown = ref(false)
 
 onMounted(() => {
   authStore.checkLoginStatus()
@@ -89,6 +91,12 @@ const handleLogout = () => {
   authStore.logout()
   cartStore.setAuthenticated(false)
   router.push('/login')
+  showDropdown.value = false
+}
+
+const handleNavigation = (route) => {
+  router.push(route)
+  showDropdown.value = false
 }
 </script>
 
@@ -273,12 +281,12 @@ const handleLogout = () => {
   position: relative;
 }
 
-.dropdown {
+.user-dropdown {
   position: relative;
   display: inline-block;
 }
 
-.user-btn {
+.user-menu-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -293,17 +301,12 @@ const handleLogout = () => {
   color: #2577c8;
 }
 
-.user-btn:hover {
+.user-menu-btn:hover {
   background: rgba(37, 119, 200, 0.1);
   transform: translateY(-2px);
 }
 
-.dropdown-icon {
-  font-size: 0.8rem;
-  margin-left: 0.25rem;
-}
-
-.dropdown-content {
+.dropdown-menu {
   display: none;
   position: absolute;
   right: 0;
@@ -317,7 +320,7 @@ const handleLogout = () => {
 }
 
 /* Adăugăm un pseudo-element pentru a acoperi spațiul */
-.dropdown::after {
+.user-dropdown::after {
   content: '';
   position: absolute;
   top: 100%;
@@ -327,11 +330,11 @@ const handleLogout = () => {
   background: transparent;
 }
 
-.dropdown:hover .dropdown-content {
+.user-dropdown:hover .dropdown-menu {
   display: block;
 }
 
-.dropdown:hover::after {
+.user-dropdown:hover::after {
   display: block;
 }
 
@@ -354,16 +357,6 @@ const handleLogout = () => {
 .dropdown-item:hover {
   background: rgba(37, 119, 200, 0.1);
   color: #2577c8;
-}
-
-.logout-item {
-  color: #dc3545;
-  border-top: 1px solid #eee;
-}
-
-.logout-item:hover {
-  background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
 }
 
 @media (max-width: 768px) {
@@ -423,11 +416,11 @@ const handleLogout = () => {
     font-size: 1.1rem;
   }
 
-  .user-btn span {
+  .user-menu-btn span {
     display: none;
   }
   
-  .dropdown-content {
+  .dropdown-menu {
     min-width: 160px;
   }
   
