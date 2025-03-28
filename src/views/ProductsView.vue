@@ -30,7 +30,8 @@
            class="product-card">
         <div class="product-image-container">
           <img :src="product.image" :alt="product.name">
-          <span class="stock-badge" v-if="product.stock < 5">Stoc limitat</span>
+          <span class="stock-badge indisponibil" v-if="product.stock === 0">Indisponibil</span>
+          <span class="stock-badge stoc-limitat" v-else-if="product.stock < 5">Stoc limitat</span>
         </div>
         
         <div class="product-details">
@@ -55,7 +56,7 @@
               <button 
                 class="quantity-btn" 
                 @click="decreaseQuantity(product)"
-                :disabled="product.quantity <= 0"
+                :disabled="product.quantity <= 0 || product.stock === 0"
               >
                 <i class="nav-icon">➖</i>
               </button>
@@ -63,7 +64,7 @@
               <button 
                 class="quantity-btn" 
                 @click="increaseQuantity(product)"
-                :disabled="product.quantity >= product.stock"
+                :disabled="product.quantity >= product.stock || product.stock === 0"
               >
                 <i class="nav-icon">➕</i>
               </button>
@@ -71,10 +72,10 @@
             <button 
               class="add-to-cart-btn"
               @click="addToCart(product)"
-              :disabled="product.quantity === 0"
+              :disabled="product.quantity === 0 || product.stock === 0"
             >
               <i class="nav-icon">🛒</i>
-              Adaugă în coș
+              {{ product.stock === 0 ? 'Indisponibil' : 'Adaugă în coș' }}
             </button>
           </div>
         </div>
@@ -257,7 +258,13 @@ export default {
         this.isLoading = true;
         const response = await fetch('http://localhost:3000/api/products');
         if (!response.ok) throw new Error('Eroare la obținerea produselor');
-        this.dbProducts = await response.json();
+        const products = await response.json();
+        
+        // Inițializăm quantity pentru fiecare produs
+        this.dbProducts = products.map(product => ({
+          ...product,
+          quantity: 0
+        }));
       } catch (error) {
         console.error('Error:', error);
         this.error = 'Nu s-au putut încărca produsele. Vă rugăm să încercați din nou.';
@@ -272,7 +279,7 @@ export default {
 
     increaseQuantity(product) {
       if (product.quantity === undefined) product.quantity = 0
-      if (product.quantity < product.stock) product.quantity++
+      if (product.quantity < product.stock && product.stock > 0) product.quantity++
     },
 
     decreaseQuantity(product) {
@@ -405,12 +412,19 @@ export default {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: #ff4444;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.stock-badge.indisponibil {
+  background: #dc3545; /* Roșu pentru indisponibil */
+}
+
+.stock-badge.stoc-limitat {
+  background: #ff9800; /* Portocaliu pentru stoc limitat */
 }
 
 .product-details {
@@ -497,12 +511,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2577c8;
-  transition: background-color 0.3s;
 }
 
-.quantity-btn:disabled {
-  opacity: 0.5;
+.quantity-btn:disabled,
+.add-to-cart-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -530,11 +543,6 @@ export default {
 
 .add-to-cart-btn:hover {
   background: #1b5a9d;
-}
-
-.add-to-cart-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
 }
 
 /* Responsive Design */
