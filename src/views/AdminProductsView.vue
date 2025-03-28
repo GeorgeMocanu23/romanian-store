@@ -2,10 +2,18 @@
   <div class="admin-products">
     <div class="admin-header">
       <h1>Administrare Produse</h1>
-      <button @click="showForm = true" v-if="!showForm" class="add-product-btn">
-        <i class="nav-icon">➕</i>
-        Adaugă Produs Nou
-      </button>
+      <div class="header-actions">
+        <div class="view-selector" v-if="!showForm">
+          <select v-model="viewMode" class="view-select">
+            <option value="grid">Vizualizare Grid</option>
+            <option value="table">Vizualizare Tabel</option>
+          </select>
+        </div>
+        <button @click="showForm = true" v-if="!showForm" class="add-product-btn">
+          <i class="nav-icon">➕</i>
+          Adaugă Produs Nou
+        </button>
+      </div>
     </div>
     
     <!-- Formular pentru adăugare/editare produs -->
@@ -62,7 +70,7 @@
               <span v-if="form.image" class="file-name">{{ getFileName(form.image) }}</span>
               <img 
                 v-if="form.image" 
-                :src="typeof form.image === 'string' ? form.image : URL.createObjectURL(form.image)" 
+                :src="typeof form.image === 'string' ? form.image : imagePreviewUrl" 
                 alt="Preview" 
                 class="image-preview"
               >
@@ -90,8 +98,12 @@
 
     <!-- Lista de produse -->
     <div class="products-list" v-if="!showForm">
-      <div class="products-grid">
-        <div v-for="product in products" :key="product.id" class="product-card">
+      <!-- Vizualizare Grid -->
+      <div class="products-grid" v-if="viewMode === 'grid'">
+        <div v-for="product in products" :key="product.id" class="product-card" :class="{
+          'product-limited': product.stock > 0 && product.stock < 5,
+          'product-unavailable': product.stock === 0
+        }">
           <div class="product-image">
             <img :src="product.image" :alt="product.name">
             <div 
@@ -102,6 +114,8 @@
             >
               {{ product.isAvailable ? 'Disponibil' : 'Indisponibil' }}
             </div>
+            <span class="stock-badge indisponibil" v-if="product.stock === 0">Indisponibil</span>
+            <span class="stock-badge stoc-limitat" v-else-if="product.stock < 5">Stoc limitat</span>
           </div>
           
           <div class="product-info">
@@ -126,6 +140,154 @@
           </div>
         </div>
       </div>
+
+      <!-- Vizualizare Tabel -->
+      <div class="products-table" v-else>
+        <table>
+          <thead>
+            <tr>
+              <th>Imagine</th>
+              <th 
+                @click="handleSort('name')"
+                class="sortable"
+                :class="{ 
+                  'sorted': sortColumn === 'name',
+                  'desc': sortColumn === 'name' && sortDirection === 'desc'
+                }"
+              >
+                Nume
+                <span class="sort-icon" v-if="sortColumn === 'name'">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th 
+                @click="handleSort('price')"
+                class="sortable"
+                :class="{ 
+                  'sorted': sortColumn === 'price',
+                  'desc': sortColumn === 'price' && sortDirection === 'desc'
+                }"
+              >
+                Preț
+                <span class="sort-icon" v-if="sortColumn === 'price'">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th 
+                @click="handleSort('stock')"
+                class="sortable"
+                :class="{ 
+                  'sorted': sortColumn === 'stock',
+                  'desc': sortColumn === 'stock' && sortDirection === 'desc'
+                }"
+              >
+                Stoc
+                <span class="sort-icon" v-if="sortColumn === 'stock'">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th 
+                @click="handleSort('category')"
+                class="sortable"
+                :class="{ 
+                  'sorted': sortColumn === 'category',
+                  'desc': sortColumn === 'category' && sortDirection === 'desc'
+                }"
+              >
+                Categorie
+                <span class="sort-icon" v-if="sortColumn === 'category'">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th 
+                @click="handleSort('isAvailable')"
+                class="sortable"
+                :class="{ 
+                  'sorted': sortColumn === 'isAvailable',
+                  'desc': sortColumn === 'isAvailable' && sortDirection === 'desc'
+                }"
+              >
+                Disponibilitate
+                <span class="sort-icon" v-if="sortColumn === 'isAvailable'">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+              </th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="product in products" :key="product.id" :class="{
+              'row-limited': product.stock > 0 && product.stock < 5,
+              'row-unavailable': product.stock === 0
+            }">
+              <td class="table-image">
+                <div class="image-container">
+                  <img :src="product.image" :alt="product.name">
+                  <span class="table-stock-badge indisponibil" v-if="product.stock === 0">0</span>
+                  <span class="table-stock-badge stoc-limitat" v-else-if="product.stock < 5">{{ product.stock }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="table-product-name">{{ product.name }}</div>
+                <div class="table-product-description">{{ product.description }}</div>
+              </td>
+              <td>{{ product.price }} RON</td>
+              <td>{{ product.stock }}</td>
+              <td>{{ product.category }}</td>
+              <td>
+                <span 
+                  class="availability-badge" 
+                  :class="{ 'available': product.isAvailable }"
+                  @click="toggleAvailability(product)"
+                >
+                  {{ product.isAvailable ? 'Disponibil' : 'Indisponibil' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <div class="table-actions">
+                  <button class="edit-btn" @click="editProduct(product)">
+                    <i class="nav-icon">✏️</i>
+                  </button>
+                  <button class="delete-btn" @click="confirmDelete(product)">
+                    <i class="nav-icon">🗑️</i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal confirmare ștergere -->
+    <div class="delete-modal" v-if="showDeleteModal">
+      <div class="modal-content">
+        <h3>Confirmare ștergere</h3>
+        <p>Ești sigur că vrei să ștergi produsul <strong>{{ productToDelete?.name }}</strong>?</p>
+        <div class="modal-actions">
+          <button @click="confirmDeleteProduct" class="delete-btn" :disabled="isLoading">
+            {{ isLoading ? 'Se șterge...' : 'Da, șterge' }}
+          </button>
+          <button @click="cancelDelete" class="cancel-btn">Nu, anulează</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal confirmare disponibilitate -->
+    <div class="availability-modal" v-if="showAvailabilityModal">
+      <div class="modal-content">
+        <h3>Confirmare modificare disponibilitate</h3>
+        <p>Ești sigur că vrei să 
+          <strong>{{ productToToggle?.isAvailable ? 'dezactivezi' : 'activezi' }}</strong> 
+          produsul <strong>{{ productToToggle?.name }}</strong>?
+        </p>
+        <div class="modal-actions">
+          <button @click="confirmToggleAvailability" class="confirm-btn" :disabled="isLoading">
+            {{ isLoading ? 'Se procesează...' : 'Da, confirmă' }}
+          </button>
+          <button @click="cancelToggleAvailability" class="cancel-btn">Nu, anulează</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -140,7 +302,15 @@ export default {
     return {
       adminStore: useAdminStore(),
       showForm: false,
+      showDeleteModal: false,
+      showAvailabilityModal: false,
       editingProduct: null,
+      productToDelete: null,
+      productToToggle: null,
+      viewMode: 'grid',
+      sortColumn: '',
+      sortDirection: 'asc',
+      imagePreviewUrl: null,
       categories: [
         'Băuturi',
         'Dulciuri',
@@ -171,7 +341,32 @@ export default {
 
   computed: {
     products() {
-      return this.adminStore.products
+      let sortedProducts = [...this.adminStore.products];
+      
+      if (this.sortColumn) {
+        sortedProducts.sort((a, b) => {
+          let aValue = a[this.sortColumn];
+          let bValue = b[this.sortColumn];
+          
+          // Convertim în numere pentru coloanele numerice
+          if (this.sortColumn === 'price' || this.sortColumn === 'stock') {
+            aValue = parseFloat(aValue);
+            bValue = parseFloat(bValue);
+          } else {
+            // Pentru text, convertim la lowercase pentru comparare case-insensitive
+            aValue = String(aValue).toLowerCase();
+            bValue = String(bValue).toLowerCase();
+          }
+          
+          if (this.sortDirection === 'asc') {
+            return aValue > bValue ? 1 : -1;
+          } else {
+            return aValue < bValue ? 1 : -1;
+          }
+        });
+      }
+      
+      return sortedProducts;
     }
   },
 
@@ -188,7 +383,13 @@ export default {
     handleImageChange(event) {
       const file = event.target.files[0]
       if (file) {
+        // Eliberăm URL-ul anterior dacă există
+        if (this.imagePreviewUrl) {
+          URL.revokeObjectURL(this.imagePreviewUrl)
+        }
         this.form.image = file
+        // Salvăm noul URL pentru revocare ulterioară
+        this.imagePreviewUrl = URL.createObjectURL(file)
       }
     },
 
@@ -227,6 +428,11 @@ export default {
     },
 
     cancelEdit() {
+      // Eliberăm URL-ul dacă există
+      if (this.imagePreviewUrl) {
+        URL.revokeObjectURL(this.imagePreviewUrl)
+        this.imagePreviewUrl = null
+      }
       this.showForm = false
       this.form = {
         name: '',
@@ -237,6 +443,7 @@ export default {
         image: '',
         isAvailable: true
       }
+      this.editingProduct = null
     },
 
     editProduct(product) {
@@ -246,36 +453,69 @@ export default {
     },
 
     confirmDelete(product) {
-      this.editingProduct = product
-      this.showForm = true
+      this.productToDelete = product;
+      this.showDeleteModal = true;
     },
 
-    async deleteProduct() {
+    cancelDelete() {
+      this.productToDelete = null;
+      this.showDeleteModal = false;
+    },
+
+    async confirmDeleteProduct() {
       try {
-        await this.adminStore.deleteProduct(this.editingProduct.id)
-        this.showForm = false
+        this.isLoading = true;
+        await this.adminStore.deleteProduct(this.productToDelete.id);
+        this.showDeleteModal = false;
+        this.productToDelete = null;
       } catch (error) {
-        alert('Eroare la ștergerea produsului')
+        alert('Eroare la ștergerea produsului');
+      } finally {
+        this.isLoading = false;
       }
     },
 
-    async toggleAvailability(product) {
-      try {
-        // Pregătim datele pentru actualizare
-        const formData = new FormData();
-        formData.append('name', product.name);
-        formData.append('description', product.description);
-        formData.append('price', product.price);
-        formData.append('stock', product.stock);
-        formData.append('category', product.category);
-        formData.append('image', product.image);
-        formData.append('isAvailable', !product.isAvailable);
+    toggleAvailability(product) {
+      this.productToToggle = product;
+      this.showAvailabilityModal = true;
+    },
 
-        // Actualizăm produsul
-        await this.adminStore.updateProduct(product.id, formData);
+    cancelToggleAvailability() {
+      this.productToToggle = null;
+      this.showAvailabilityModal = false;
+    },
+
+    async confirmToggleAvailability() {
+      try {
+        this.isLoading = true;
+        const formData = new FormData();
+        formData.append('name', this.productToToggle.name);
+        formData.append('description', this.productToToggle.description);
+        formData.append('price', this.productToToggle.price);
+        formData.append('stock', this.productToToggle.stock);
+        formData.append('category', this.productToToggle.category);
+        formData.append('image', this.productToToggle.image);
+        formData.append('isAvailable', !this.productToToggle.isAvailable);
+
+        await this.adminStore.updateProduct(this.productToToggle.id, formData);
+        this.showAvailabilityModal = false;
+        this.productToToggle = null;
       } catch (error) {
         console.error('Error toggling availability:', error);
         alert('Eroare la actualizarea disponibilității produsului');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    handleSort(column) {
+      if (this.sortColumn === column) {
+        // Dacă coloana este deja sortată, schimbăm direcția
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // Dacă sortăm o nouă coloană, setăm direcția ascendentă
+        this.sortColumn = column;
+        this.sortDirection = 'asc';
       }
     }
   }
@@ -305,6 +545,35 @@ export default {
   color: #2577c8;
   margin: 0;
   font-size: 1.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.view-selector {
+  position: relative;
+}
+
+.view-select {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-select:focus {
+  outline: none;
+  border-color: #2577c8;
+  box-shadow: 0 0 0 2px rgba(37, 119, 200, 0.1);
 }
 
 .add-product-btn {
@@ -319,6 +588,7 @@ export default {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
+  white-space: nowrap;
 }
 
 .add-product-btn:hover {
@@ -720,5 +990,366 @@ export default {
   .products-grid {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* Stilizare Tabel */
+.products-table {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  color: #333;
+}
+
+.table-image {
+  position: relative;
+  width: 80px;
+}
+
+.table-image .image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.table-image img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.table-stock-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.table-stock-badge.indisponibil {
+  background: #dc3545; /* Roșu pentru indisponibil */
+}
+
+.table-stock-badge.stoc-limitat {
+  background: #ff9800; /* Portocaliu pentru stoc limitat */
+}
+
+.table-product-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.table-product-description {
+  font-size: 0.875rem;
+  color: #666;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  line-clamp: 2;
+}
+
+.availability-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #ff4444;
+  color: white;
+  cursor: pointer;
+}
+
+.availability-badge.available {
+  background: #00C851;
+}
+
+.actions-cell {
+  width: 120px;
+  text-align: center;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.table-actions button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-actions .edit-btn {
+  background: #2577c8;
+  color: white;
+}
+
+.table-actions .delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-select {
+    width: 100%;
+  }
+
+  .products-table {
+    /* margin: 0 -1rem; */
+    border-radius: 0;
+  }
+
+  table {
+    font-size: 0.875rem;
+  }
+
+  th, td {
+    padding: 0.75rem;
+  }
+
+  .table-image {
+    width: 60px;
+  }
+
+  .table-image img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .table-product-description {
+    max-width: 200px;
+  }
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 1.5rem;
+}
+
+.sortable:hover {
+  background-color: #e9ecef;
+}
+
+.sort-icon {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.sorted {
+  background-color: #f1f8ff;
+}
+
+.sorted .sort-icon {
+  color: #2577c8;
+}
+
+.desc.sorted {
+  background-color: #f8f1ff;
+}
+
+/* Stilizare Modal */
+.delete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h3 {
+  color: #333;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.modal-content p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.modal-content strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-actions .delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.modal-actions .delete-btn:hover {
+  background: #c82333;
+}
+
+.modal-actions .delete-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.modal-actions .cancel-btn {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+}
+
+.modal-actions .cancel-btn:hover {
+  background: #e9ecef;
+}
+
+/* Stilizare Modal Disponibilitate */
+.availability-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-actions .confirm-btn {
+  background: #2577c8;
+  color: white;
+}
+
+.modal-actions .confirm-btn:hover {
+  background: #1b5a9d;
+}
+
+.modal-actions .confirm-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.product-card.product-limited {
+  border: 4px solid #ff9800;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.2);
+}
+
+.product-card.product-unavailable {
+  border: 4px solid #dc3545;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+  opacity: 0.8;
+}
+
+.stock-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stock-badge.indisponibil {
+  background: #dc3545; /* Roșu pentru indisponibil */
+}
+
+.stock-badge.stoc-limitat {
+  background: #ff9800; /* Portocaliu pentru stoc limitat */
+}
+
+.row-limited {
+  background-color: rgba(255, 153, 0, 0.368);
+}
+
+.row-limited:hover {
+  background-color: rgba(255, 153, 0, 0.737);
+}
+
+.row-unavailable {
+  background-color: rgba(220, 53, 70, 0.372);
+}
+
+.row-unavailable:hover {
+  background-color: rgba(220, 53, 70, 0.737);
 }
 </style> 
