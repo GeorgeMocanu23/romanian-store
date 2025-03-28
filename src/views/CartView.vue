@@ -124,7 +124,7 @@ export default {
 .cart-container {
   min-height: 100vh;
   padding: 100px 2rem 2rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  /* background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); */
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
@@ -256,10 +256,19 @@ export default {
   padding: 0.5rem;
   color: #dc3545;
   transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .remove-item:hover {
   transform: scale(1.1);
+  background-color: #fee2e2;
 }
 
 .cart-summary {
@@ -323,11 +332,13 @@ export default {
 
 @media (max-width: 768px) {
   .cart-container {
-    padding: 80px 1rem 1rem;
+    padding: 80px 0.5rem 1rem;
   }
 
   .cart-content {
     padding: 1rem;
+    margin: 0 0.5rem;
+    border-radius: 15px;
   }
 
   .cart-item {
@@ -357,6 +368,7 @@ export default {
     position: absolute;
     top: 1rem;
     right: 1rem;
+    z-index: 10;
   }
 
   .cart-header h1 {

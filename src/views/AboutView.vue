@@ -309,7 +309,7 @@ p {
 }
 
 .contact-section {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  /* background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); */
   padding: 5rem 0;
 }
 

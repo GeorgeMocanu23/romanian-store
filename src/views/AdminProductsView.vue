@@ -60,6 +60,12 @@
                 {{ form.image ? 'Schimbă Imaginea' : 'Alege Imagine' }}
               </label>
               <span v-if="form.image" class="file-name">{{ getFileName(form.image) }}</span>
+              <img 
+                v-if="form.image" 
+                :src="typeof form.image === 'string' ? form.image : URL.createObjectURL(form.image)" 
+                alt="Preview" 
+                class="image-preview"
+              >
             </div>
           </div>
         </div>
@@ -279,8 +285,11 @@ export default {
 <style scoped>
 .admin-products {
   padding: 0;
-  margin: 0 auto;
+  margin: 0;
   margin-top: 60px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 
 .admin-header {
@@ -318,22 +327,24 @@ export default {
 
 .products-list {
   margin: 0;
+  padding: 0 1rem;
 }
 
 .products-grid {
   display: grid;
   gap: 1px;
-  background: #f0f0f0;
 }
 
 .product-card {
   background: white;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  margin: 0;
+  margin-top: 0.75rem;
   overflow: hidden;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .product-image {
@@ -424,6 +435,7 @@ export default {
   display: flex;
   gap: 0.75rem;
   padding: 0 1.25rem 1.25rem;
+  justify-content: center;
 }
 
 .edit-btn,
@@ -440,6 +452,7 @@ export default {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
+  max-width: 200px;
 }
 
 .edit-btn {
@@ -511,10 +524,28 @@ export default {
   margin: 1rem 0;
 }
 
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 0;
+}
+
 .checkbox-group input[type="checkbox"] {
   width: 1.2rem;
   height: 1.2rem;
   accent-color: #2577c8;
+  cursor: pointer;
+}
+
+.image-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .form-actions {
@@ -625,12 +656,18 @@ export default {
   .admin-products {
     padding: 1rem 5%;
     max-width: 1400px;
+    margin: 60px auto 0;
+    width: 100%;
   }
 
   .admin-header {
     padding: 0;
     margin-bottom: 2rem;
     background: transparent;
+  }
+
+  .products-list {
+    padding: 0;
   }
 
   .products-grid {
